@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaleAPI - API de Vendas, Carrinho e Produtos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #108538;
+      --primary-hover: #0c6b2c;
+      --primary-light: #e8f7ec;
+      --primary-soft: #f0fdf4;
+      --dark: #0f172a;
+      --dark-card: #151f32;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border-color: #e2e8f0;
+      --bg-page: #fcfdfd;
+      --bg-card: #ffffff;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      --font: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* =========================================
+       HEADER / NAVBAR
+    ========================================= */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #f1f5f9;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 76px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .logo span {
+      color: var(--primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 24px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    /* =========================================
+       HERO SECTION
+    ========================================= */
+    .hero {
+      padding: 70px 0 60px;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .hero-title {
+      font-size: 46px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      color: #0f172a;
+    }
+
+    .hero-title span {
+      color: var(--primary);
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: #64748b;
+      line-height: 1.6;
+      max-width: 520px;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 26px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 4px 12px rgba(16, 133, 56, 0.25);
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid var(--border-color);
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .hero-social-proof {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .avatar-group {
+      display: flex;
+    }
+
+    .avatar-group img, .avatar-group .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      margin-left: -10px;
+      display: inline-block;
+    }
+
+    .avatar-group .avatar:first-child {
+      margin-left: 0;
+    }
+
+    .proof-text {
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.35;
+    }
+
+    .proof-text strong {
+      color: #0f172a;
+    }
+
+    /* Hero Right Visual */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 440px;
+    }
+
+    .hero-cart-svg {
+      width: 100%;
+      max-width: 380px;
+      height: auto;
+      filter: drop-shadow(0 20px 30px rgba(0,0,0,0.08));
+    }
+
+    /* Floating Stats Cards */
+    .floating-card {
+      position: absolute;
+      background: #ffffff;
+      padding: 10px 16px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #f1f5f9;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .floating-card .icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+    }
+
+    .floating-card .stat-num {
+      font-weight: 800;
+      font-size: 16px;
+      color: #0f172a;
+      line-height: 1.1;
+    }
+
+    .floating-card .stat-label {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .card-top-left {
+      top: 10px;
+      left: -10px;
+      animation-delay: 0s;
+    }
+
+    .card-top-right {
+      top: 70px;
+      right: -20px;
+      animation-delay: 1.5s;
+    }
+
+    .card-bottom-right {
+      bottom: 25px;
+      right: 0px;
+      animation-delay: 3s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* =========================================
+       TRUST LOGOS SECTION
+    ========================================= */
+    .trust-section {
+      padding: 30px 0 60px;
+    }
+
+    .trust-box {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      padding: 28px 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .trust-label {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      padding: 2px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      border: 1px solid #dcfce7;
+      text-transform: uppercase;
+    }
+
+    .trust-logos {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+
+    .trust-logo-item {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* =========================================
+       FEATURES SECTION
+    ========================================= */
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .feature-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .feature-illustration {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .feature-illustration svg {
+      max-height: 100%;
+      width: auto;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* =========================================
+       ENDPOINTS / DARK CODE SECTION
+    ========================================= */
+    .endpoints-section {
+      background-color: #0c1322;
+      padding: 80px 0 70px;
+      margin-top: 80px;
+      color: #ffffff;
+    }
+
+    .endpoints-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .endpoints-left h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 32px;
+      letter-spacing: -0.01em;
+    }
+
+    .endpoint-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .endpoint-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+
+    .endpoint-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .endpoint-name {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .endpoint-name svg {
+      color: var(--primary);
+    }
+
+    .endpoint-routes {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .endpoint-routes .method {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    /* Terminal on the right */
+    .code-terminal-wrapper {
+      position: relative;
+    }
+
+    .terminal {
+      background: #060b13;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      background: #0f172a;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .terminal-lang {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .code-hl-green { color: #34d399; }
+    .code-hl-blue { color: #38bdf8; }
+    .code-hl-orange { color: #fb923c; }
+    .code-hl-yellow { color: #fde047; }
+    .code-hl-muted { color: #64748b; }
+
+    .terminal-dev-avatar {
+      position: absolute;
+      bottom: -35px;
+      right: -25px;
+      width: 150px;
+      height: auto;
+      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+      pointer-events: none;
+    }
+
+    .docs-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #34d399;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 24px;
+      transition: color 0.2s;
+    }
+
+    .docs-link:hover {
+      color: #6ee7b7;
+      text-decoration: underline;
+    }
+
+    /* =========================================
+       USE CASES SECTION
+    ========================================= */
+    .usecases-section {
+      padding: 90px 0;
+    }
+
+    .usecases-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .usecase-card {
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .usecase-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .usecase-illustration {
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .usecase-illustration svg {
+      max-height: 100%;
+      width: auto;
+    }
+
+    .usecase-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .usecase-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* =========================================
+       BANNER CTA
+    ========================================= */
+    .cta-banner {
+      background: linear-gradient(135deg, #0e7e34 0%, #108538 100%);
+      border-radius: 18px;
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #ffffff;
+      box-shadow: 0 20px 40px rgba(16, 133, 56, 0.2);
+      margin-bottom: 80px;
+    }
+
+    .cta-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .cta-icon-circle {
+      width: 72px;
+      height: 72px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .cta-content h2 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .cta-content p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .btn-cta-white {
+      background: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 14.5px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-cta-white:hover {
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    /* =========================================
+       FOOTER
+    ========================================= */
+    footer {
+      background: #080d1a;
+      color: #94a3b8;
+      padding: 70px 0 35px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr 1.2fr;
+      gap: 40px;
+      margin-bottom: 60px;
+    }
+
+    .footer-brand .logo {
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .footer-brand p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #64748b;
+      margin-bottom: 20px;
+      max-width: 260px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 14px;
+    }
+
+    .social-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #cbd5e1;
+      transition: all 0.2s;
+    }
+
+    .social-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .footer-col h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 18px;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      font-size: 13px;
+      color: #64748b;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #cbd5e1;
+    }
+
+    .security-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .sec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #131d2e;
+      border: 1px solid #1e293b;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .footer-bottom {
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid #131d2e;
+      font-size: 12px;
+      color: #475569;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .endpoints-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .usecases-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .cta-banner { flex-direction: column; text-align: center; gap: 20px; }
+      .cta-left { flex-direction: column; }
+    }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .hero-title { font-size: 32px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .usecases-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= NAVBAR ================= -->
+  <header>
+    <div class="container nav-inner">
+      <a href="#" class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#108538" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        Sale<span>API</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#recursos">Recursos</a></li>
+        <li><a href="#documentacao">Documentação</a></li>
+        <li><a href="#precos">Preços</a></li>
+        <li><a href="#casos">Casos de Uso</a></li>
+        <li><a href="#suporte">Suporte</a></li>
+      </ul>
+
+      <a href="#" class="btn-header">
+        Começar Agora
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-left">
+        <h1 class="hero-title">
+          API de Vendas,<br>
+          <span>Carrinho e Produtos</span><br>
+          para seu negócio
+        </h1>
+        <p class="hero-desc">
+          Integre carrinho, produtos, preços e vendas em minutos. API rápida, segura e fácil de usar para impulsionar seu e-commerce ou marketplace.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#" class="btn-primary">
+            Começar Gratuitamente
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+          <a href="#" class="btn-secondary">
+            Ver Documentação
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </a>
+        </div>
+
+        <div class="hero-social-proof">
+          <div class="avatar-group">
+            <svg class="avatar" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="18" fill="#e2e8f0"/>
+              <circle cx="18" cy="14" r="7" fill="#475569"/>
+              <path d="M6 32 C6 24, 30 24, 30 32" fill="#475569"/>
+            </svg>
+            <svg class="avatar" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="18" fill="#fed7aa"/>
+              <circle cx="18" cy="14" r="7" fill="#ea580c"/>
+              <path d="M6 32 C6 24, 30 24, 30 32" fill="#0284c7"/>
+            </svg>
+            <svg class="avatar" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="18" fill="#bbf7d0"/>
+              <circle cx="18" cy="14" r="7" fill="#16a34a"/>
+              <path d="M6 32 C6 24, 30 24, 30 32" fill="#108538"/>
+            </svg>
+            <svg class="avatar" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="18" fill="#fef08a"/>
+              <circle cx="18" cy="14" r="7" fill="#ca8a04"/>
+              <path d="M6 32 C6 24, 30 24, 30 32" fill="#334155"/>
+            </svg>
+          </div>
+          <div class="proof-text">
+            <strong>+320 desenvolvedores</strong><br>
+            já integram com nossa API
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Graphic -->
+      <div class="hero-visual">
+        <!-- Floating Badges -->
+        <div class="floating-card card-top-left">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
+          <div>
+            <div class="stat-num">1.200+</div>
+            <div class="stat-label">Produtos disponíveis</div>
+          </div>
+        </div>
+
+        <div class="floating-card card-top-right">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          </div>
+          <div>
+            <div class="stat-num">5.800+</div>
+            <div class="stat-label">Carrinhos criados</div>
+          </div>
+        </div>
+
+        <div class="floating-card card-bottom-right">
+          <div class="icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          </div>
+          <div>
+            <div class="stat-num">+98,9%</div>
+            <div class="stat-label">Uptime da API</div>
+          </div>
+        </div>
+
+        <!-- 3D Cart Illustration -->
+        <svg class="hero-cart-svg" viewBox="0 0 400 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Shadow floor -->
+          <ellipse cx="210" cy="330" rx="140" ry="18" fill="#e2e8f0" />
+          
+          <!-- Box on floor -->
+          <g transform="translate(100, 260)">
+            <path d="M30 0 L65 18 L35 36 L0 18 Z" fill="#22c55e"/>
+            <path d="M0 18 L35 36 L35 60 L0 42 Z" fill="#16a34a"/>
+            <path d="M65 18 L35 36 L35 60 L65 42 Z" fill="#15803d"/>
+            <line x1="32" y1="18" x2="32" y2="60" stroke="#166534" stroke-width="1.5"/>
+          </g>
+
+          <!-- Cart Frame -->
+          <!-- Wheels -->
+          <circle cx="160" cy="300" r="14" fill="#334155"/>
+          <circle cx="160" cy="300" r="6" fill="#94a3b8"/>
+          <circle cx="270" cy="300" r="14" fill="#334155"/>
+          <circle cx="270" cy="300" r="6" fill="#94a3b8"/>
+          
+          <!-- Base chassis -->
+          <path d="M130 280 L290 270 L300 295 L145 300 Z" fill="#64748b"/>
+          
+          <!-- Bags inside cart -->
+          <g transform="translate(140, 110)">
+            <!-- Green Gift Bag 1 -->
+            <rect x="20" y="20" width="55" height="75" rx="6" fill="#15803d"/>
+            <path d="M35 20 C35 5, 60 5, 60 20" stroke="#f1f5f9" stroke-width="3" fill="none"/>
+            <!-- Green Gift Box 2 -->
+            <path d="M65 10 L115 10 L130 35 L80 35 Z" fill="#4ade80"/>
+            <rect x="80" y="35" width="50" height="60" fill="#22c55e"/>
+            <rect x="65" y="35" width="15" height="60" fill="#16a34a"/>
+            <!-- Green Box 3 -->
+            <rect x="100" y="55" width="55" height="50" rx="4" fill="#86efac"/>
+          </g>
+
+          <!-- Cart Grid Metal Basket -->
+          <path d="M120 150 L310 120 L280 240 L150 250 Z" fill="rgba(241, 245, 249, 0.4)" stroke="#94a3b8" stroke-width="4"/>
+          <!-- Grid wire lines -->
+          <line x1="125" y1="175" x2="300" y2="150" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="135" y1="205" x2="290" y2="185" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="145" y1="230" x2="285" y2="215" stroke="#94a3b8" stroke-width="2.5"/>
+          
+          <line x1="160" y1="145" x2="175" y2="248" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="200" y1="140" x2="210" y2="245" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="240" y1="133" x2="245" y2="242" stroke="#94a3b8" stroke-width="2.5"/>
+          <line x1="275" y1="127" x2="275" y2="240" stroke="#94a3b8" stroke-width="2.5"/>
+
+          <!-- Cart Handle -->
+          <path d="M305 120 L325 80 L355 85" fill="none" stroke="#22c55e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="310" y1="230" x2="330" y2="85" stroke="#94a3b8" stroke-width="4"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TRUST LOGOS ================= -->
+  <section class="trust-section">
+    <div class="container">
+      <div class="trust-box">
+        <span class="trust-label">Empresas que confiam</span>
+        <div class="trust-logos">
+          <div class="trust-logo-item">tray.</div>
+          <div class="trust-logo-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#0f172a"><circle cx="12" cy="12" r="10"/></svg>
+            loja integrada
+          </div>
+          <div class="trust-logo-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            nuvemshop
+          </div>
+          <div class="trust-logo-item">bling!</div>
+          <div class="trust-logo-item">e-com.<span>plus</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FEATURES GRID ================= -->
+  <section class="features-section" id="recursos">
+    <div class="container">
+      <div class="section-header">
+        <h2>Tudo que você precisa em uma única API</h2>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+          </div>
+          <div class="feature-illustration">
+            <!-- Girl holding box -->
+            <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="80" cy="40" r="18" fill="#fed7aa"/>
+              <path d="M62 35 C62 18, 98 18, 98 35 C98 52, 62 52, 62 35 Z" fill="#1e293b"/>
+              <path d="M60 65 L100 65 L110 130 L50 130 Z" fill="#108538"/>
+              <!-- Green box held in hand -->
+              <rect x="40" y="70" width="55" height="42" rx="4" fill="#22c55e" stroke="#15803d" stroke-width="2"/>
+              <path d="M40 84 L95 84" stroke="#15803d" stroke-width="2"/>
+            </svg>
+          </div>
+          <h3>Produtos</h3>
+          <p>Cadastre, atualize e consulte produtos, categorias, estoque, preços e variações.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          </div>
+          <div class="feature-illustration">
+            <!-- Guy pushing shopping cart -->
+            <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="35" r="16" fill="#fed7aa"/>
+              <path d="M38 32 C38 18, 62 18, 62 32 Z" fill="#78350f"/>
+              <path d="M38 55 L65 55 L70 120 L35 120 Z" fill="#16a34a"/>
+              <!-- Mini Cart -->
+              <rect x="80" y="65" width="55" height="40" rx="3" fill="none" stroke="#64748b" stroke-width="2.5"/>
+              <circle cx="90" cy="112" r="6" fill="#334155"/>
+              <circle cx="125" cy="112" r="6" fill="#334155"/>
+              <rect x="88" y="55" width="22" height="25" fill="#22c55e"/>
+              <rect x="105" y="48" width="20" height="30" fill="#4ade80"/>
+            </svg>
+          </div>
+          <h3>Carrinho</h3>
+          <p>Gerencie carrinhos, adicione ou remova itens, aplique cupons e calcule totais.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          </div>
+          <div class="feature-illustration">
+            <!-- Girl holding tablet -->
+            <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="90" cy="38" r="17" fill="#fed7aa"/>
+              <path d="M74 35 C74 15, 108 15, 108 35 Z" fill="#1e293b"/>
+              <path d="M70 60 L115 60 L110 130 L65 130 Z" fill="#108538"/>
+              <!-- Tablet -->
+              <rect x="45" y="65" width="40" height="55" rx="4" fill="#334155"/>
+              <rect x="49" y="70" width="32" height="42" fill="#38bdf8"/>
+            </svg>
+          </div>
+          <h3>Vendas</h3>
+          <p>Crie pedidos, consulte status, acompanhe pagamentos e histórico de compras.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </div>
+          <div class="feature-illustration">
+            <!-- Guy with shield -->
+            <svg viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="110" cy="38" r="16" fill="#fed7aa"/>
+              <path d="M96 32 C96 18, 124 18, 124 32 Z" fill="#b45309"/>
+              <path d="M90 60 L130 60 L125 125 L85 125 Z" fill="#16a34a"/>
+              <!-- Green Shield with Lock -->
+              <path d="M60 45 L85 55 L85 95 C85 110, 60 120, 60 120 C60 120, 35 110, 35 95 L35 55 Z" fill="#22c55e" stroke="#15803d" stroke-width="2"/>
+              <rect x="52" y="75" width="16" height="14" rx="2" fill="#ffffff"/>
+              <path d="M55 75 V70 C55 67, 65 67, 65 70 V75" stroke="#ffffff" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+          <h3>Segurança</h3>
+          <p>Autenticação segura com tokens, HTTPS e proteção de dados rigorosa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ENDPOINTS (DARK CODE) ================= -->
+  <section class="endpoints-section" id="documentacao">
+    <div class="container endpoints-grid">
+      <div class="endpoints-left">
+        <h2>Endpoints simples e poderosos</h2>
+        <div class="endpoint-list">
+          <div class="endpoint-item">
+            <div class="endpoint-name">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+              Produtos
+            </div>
+            <div class="endpoint-routes">
+              <div><span class="method">GET</span> /produtos</div>
+              <div><span class="method">POST</span> /produtos</div>
+            </div>
+          </div>
+
+          <div class="endpoint-item">
+            <div class="endpoint-name">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              Categorias
+            </div>
+            <div class="endpoint-routes">
+              <div><span class="method">GET</span> /categorias</div>
+            </div>
+          </div>
+
+          <div class="endpoint-item">
+            <div class="endpoint-name">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+              Vendas
+            </div>
+            <div class="endpoint-routes">
+              <div><span class="method">GET</span> /carrinho</div>
+              <div><span class="method">POST</span> /carrinho/itens</div>
+            </div>
+          </div>
+
+          <div class="endpoint-item">
+            <div class="endpoint-name">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Clientes
+            </div>
+            <div class="endpoint-routes">
+              <div><span class="method">POST</span> /vendas</div>
+              <div><span class="method">GET</span> /vendas/{id}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Box -->
+      <div class="code-terminal-wrapper">
+        <div class="terminal">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="dot dot-red"></div>
+              <div class="dot dot-yellow"></div>
+              <div class="dot dot-green"></div>
+            </div>
+            <span class="terminal-lang">curl</span>
+          </div>
+          <div class="terminal-body">
+<span class="code-hl-muted">curl -X POST</span> <span class="code-hl-blue">https://api.saleapi.com/v1/carrinho/itens</span> \
+  <span class="code-hl-muted">-H</span> <span class="code-hl-green">"Authorization: Bearer SEU_TOKEN"</span> \
+  <span class="code-hl-muted">-H</span> <span class="code-hl-green">"Content-Type: application/json"</span> \
+  <span class="code-hl-muted">-d '{</span>
+    <span class="code-hl-orange">"produto_id"</span>: <span class="code-hl-yellow">"1234"</span>,
+    <span class="code-hl-orange">"quantidade"</span>: <span class="code-hl-blue">2</span>
+  <span class="code-hl-muted">}'</span>
+          </div>
+        </div>
+
+        <a href="#" class="docs-link">
+          Ver todos endpoints na documentação
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </a>
+
+        <!-- Dev sitting with laptop vector -->
+        <svg class="terminal-dev-avatar" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="70" cy="40" r="20" fill="#fed7aa"/>
+          <path d="M50 35 C50 15, 90 15, 90 35 Z" fill="#1e293b"/>
+          <path d="M40 70 L100 70 L110 140 L30 140 Z" fill="#16a34a"/>
+          <!-- Laptop -->
+          <path d="M40 95 L95 95 L105 125 L30 125 Z" fill="#334155"/>
+          <rect x="46" y="98" width="45" height="22" fill="#0f172a" rx="2"/>
+          <text x="56" y="114" fill="#22c55e" font-size="11" font-family="monospace" font-weight="bold">&lt;/&gt;</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= USE CASES ================= -->
+  <section class="usecases-section" id="casos">
+    <div class="container">
+      <div class="section-header">
+        <h2>Feita para diversos negócios</h2>
+      </div>
+
+      <div class="usecases-grid">
+        <!-- Use Case 1 -->
+        <div class="usecase-card">
+          <div class="usecase-illustration">
+            <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="25" y="30" width="110" height="75" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+              <path d="M20 30 L80 15 L140 30" fill="#22c55e"/>
+              <circle cx="80" cy="65" r="18" fill="#dcfce7"/>
+              <path d="M72 65 H88 M80 57 V73" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="110" y="70" width="30" height="35" rx="3" fill="#15803d"/>
+            </svg>
+          </div>
+          <h3>E-commerce</h3>
+          <p>Sincronize produtos, estoque e pedidos em tempo real com sua loja virtual.</p>
+        </div>
+
+        <!-- Use Case 2 -->
+        <div class="usecase-card">
+          <div class="usecase-illustration">
+            <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="30" y="25" width="100" height="65" rx="4" fill="#0f172a"/>
+              <circle cx="45" cy="45" r="10" fill="#fed7aa"/>
+              <circle cx="115" cy="45" r="10" fill="#fed7aa"/>
+              <rect x="65" y="55" width="30" height="25" fill="#f59e0b"/>
+              <path d="M45 105 L115 105" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Marketplace</h3>
+          <p>Conecte múltiplos vendedores, gerencie produtos e vendas de forma centralizada.</p>
+        </div>
+
+        <!-- Use Case 3 -->
+        <div class="usecase-card">
+          <div class="usecase-illustration">
+            <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="55" y="15" width="50" height="95" rx="8" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+              <rect x="60" y="25" width="40" height="75" fill="#f0fdf4" rx="4"/>
+              <circle cx="80" cy="55" r="12" fill="#22c55e"/>
+              <path d="M76 55 L84 55" stroke="#fff" stroke-width="2"/>
+              <rect x="68" y="75" width="24" height="6" rx="2" fill="#16a34a"/>
+            </svg>
+          </div>
+          <h3>Aplicativos</h3>
+          <p>Leve o poder do catálogo e carrinho para apps mobile de forma rápida.</p>
+        </div>
+
+        <!-- Use Case 4 -->
+        <div class="usecase-card">
+          <div class="usecase-illustration">
+            <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="40" y="30" width="80" height="75" fill="#cbd5e1" rx="2"/>
+              <rect x="50" y="40" width="12" height="12" fill="#38bdf8"/>
+              <rect x="70" y="40" width="12" height="12" fill="#38bdf8"/>
+              <rect x="90" y="40" width="12" height="12" fill="#22c55e"/>
+              <rect x="70" y="75" width="20" height="30" fill="#0f172a"/>
+              <!-- Analytics chart floating -->
+              <rect x="95" y="20" width="45" height="40" rx="4" fill="#ffffff" stroke="#e2e8f0"/>
+              <path d="M100 48 L112 36 L124 42 L134 28" stroke="#16a34a" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+          <h3>Sistemas Internos</h3>
+          <p>Conecte sua operação interna com vendas, estoque e clientes de forma eficiente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BANNER CTA ================= -->
+  <div class="container">
+    <section class="cta-banner">
+      <div class="cta-left">
+        <div class="cta-icon-circle">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#108538" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+            <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+          </svg>
+        </div>
+        <div class="cta-content">
+          <h2>Pronto para acelerar suas vendas?</h2>
+          <p>Comece gratuitamente e veja como nossa API pode transformar seu negócio.</p>
+        </div>
+      </div>
+
+      <a href="#" class="btn-cta-white">
+        Criar Conta Grátis
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+    </section>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Col 1: Brand -->
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#108538" stroke-width="2.2">
+              <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            Sale<span style="color:#22c55e">API</span>
+          </a>
+          <p>API moderna para vendas, carrinhos e produtos. Simples, rápida e confiável.</p>
+          
+          <div class="social-links">
+            <a href="#" class="social-btn" aria-label="GitHub">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            </a>
+            <a href="#" class="social-btn" aria-label="X">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" class="social-btn" aria-label="LinkedIn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Produto -->
+        <div class="footer-col">
+          <h4>Produto</h4>
+          <ul class="footer-links">
+            <li><a href="#">Recursos</a></li>
+            <li><a href="#">Preços</a></li>
+            <li><a href="#">Documentação</a></li>
+            <li><a href="#">Changelog</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Empresa -->
+        <div class="footer-col">
+          <h4>Empresa</h4>
+          <ul class="footer-links">
+            <li><a href="#">Sobre nós</a></li>
+            <li><a href="#">Casos de uso</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Contato</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Suporte -->
+        <div class="footer-col">
+          <h4>Suporte</h4>
+          <ul class="footer-links">
+            <li><a href="#">Central de ajuda</a></li>
+            <li><a href="#">Documentação</a></li>
+            <li><a href="#">Status da API</a></li>
+            <li><a href="#">Fale conosco</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 5: Segurança -->
+        <div class="footer-col">
+          <h4>Segurança e Conformidade</h4>
+          <div class="security-badges">
+            <div class="sec-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              SSL
+            </div>
+            <div class="sec-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              LGPD
+            </div>
+            <div class="sec-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+              ISO 27001
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        &copy; 2026 SaleAPI. Todos os direitos reservados.
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

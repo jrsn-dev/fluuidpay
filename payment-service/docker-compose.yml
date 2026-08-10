@@ -1,0 +1,105 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fluuid-pay-postgres
+    environment:
+      POSTGRES_DB: payment_service
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fluuid-pay-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: fluuid-pay-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fluuid-pay-api
+    environment:
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "8080"
+      DB_HOST: fluuid-pay-postgres
+      DB_PORT: "5432"
+      DB_USER: payment
+      DB_PASSWORD: payment
+      DB_NAME: payment_service
+      DB_SSLMODE: disable
+      REDIS_ADDR: "fluuid-pay-redis:6379"
+      RABBITMQ_URL: "amqp://guest:guest@fluuid-pay-rabbitmq:5672/"
+      TAX_RULES_PATH: "/app/config/tax_rules.yaml"
+      KEYCLOAK_JWKS_URL: "http://fluuid-pay-keycloak:8080/realms/fluuid-pay/protocol/openid-connect/certs"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    container_name: fluuid-pay-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://fluuid-pay-postgres:5432/keycloak"
+      KC_DB_USERNAME: payment
+      KC_DB_PASSWORD: payment
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+    command: start-dev --import-realm
+    volumes:
+      - ./config/realm-export.json:/opt/keycloak/data/import/realm.json
+      - ./themes:/opt/keycloak/themes
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  redis_data:
+  rabbitmq_data:

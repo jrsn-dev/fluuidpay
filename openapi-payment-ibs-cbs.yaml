@@ -1,0 +1,619 @@
+openapi: 3.1.0
+info:
+  title: Payment Service API
+  version: 1.0.0
+  summary: API de pagamentos com tributação IBS/CBS
+  description: |
+    API para criação e consulta de pagamentos. O serviço aceita somente tokens
+    de cartão emitidos por gateway compatível; PAN e CVV não fazem parte do
+    contrato. O cálculo tributário retorna IBS, CBS, total e versão da regra
+    utilizada. A criação exige Idempotency-Key.
+  contact:
+    name: Payment Platform
+    email: payments@example.com
+servers:
+  - url: https://api.example.com
+    description: Produção
+  - url: https://sandbox-api.example.com
+    description: Sandbox
+
+tags:
+  - name: Payments
+    description: Operações de pagamento
+  - name: Webhooks
+    description: Notificações assíncronas do gateway
+
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/payments:
+    post:
+      tags: [Payments]
+      operationId: createPayment
+      summary: Criar um pagamento
+      description: |
+        Cria uma transação usando um token seguro de cartão. A operação é
+        idempotente por Idempotency-Key. Uma repetição com a mesma chave e o
+        mesmo payload retorna o resultado original; uma repetição com payload
+        diferente retorna 409.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+            examples:
+              approved:
+                value:
+                  user_id: user-123
+                  order_id: order-456
+                  amount_minor: 19990
+                  currency: BRL
+                  card_token: tok_provider_abc
+                  destination:
+                    country_code: BR
+                    state_code: SP
+                    city_code: 3550308
+                  tax_context:
+                    product_type: physical_goods
+                    customer_type: individual
+      responses:
+        '201':
+          description: Pagamento criado e aprovado.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '202':
+          description: Pagamento aceito, mas ainda pendente de confirmação.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '200':
+          description: Resultado retornado por repetição idempotente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Pagamento rejeitado pelo gateway.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: payment_rejected
+                message: O gateway rejeitou a transação.
+                correlation_id: corr-123
+                details:
+                  provider_code: do_not_honor
+        '409':
+          description: Conflito de idempotência ou estado da transação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: idempotency_conflict
+                message: A chave já foi usada com payload diferente.
+                correlation_id: corr-123
+        '422':
+          description: Dados semanticamente inválidos ou regra tributária não aplicável.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          description: Dependência temporariamente indisponível.
+          headers:
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-idempotency:
+        header: Idempotency-Key
+        ttl: 24h
+
+  /v1/payments/{transactionId}:
+    get:
+      tags: [Payments]
+      operationId: getPayment
+      summary: Consultar um pagamento
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/CorrelationIdParam'
+      responses:
+        '200':
+          description: Pagamento encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/payments/{transactionId}/cancel:
+    post:
+      tags: [Payments]
+      operationId: cancelPayment
+      summary: Cancelar um pagamento
+      description: Cancela uma transação quando o estado e a política do gateway permitirem.
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationIdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelPaymentRequest'
+      responses:
+        '200':
+          description: Pagamento cancelado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Estado não permite cancelamento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /v1/webhooks/payment-gateway:
+    post:
+      tags: [Webhooks]
+      operationId: receivePaymentGatewayWebhook
+      summary: Receber atualização assíncrona do gateway
+      security:
+        - webhookSignature: []
+      parameters:
+        - name: X-Webhook-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+        - name: X-Webhook-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/CorrelationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayWebhook'
+      responses:
+        '202':
+          description: Webhook aceito para processamento assíncrono.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Assinatura ausente ou inválida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Webhook já processado; a resposta é idempotente.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token de acesso emitido pelo provedor de identidade.
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: X-Webhook-Signature
+      description: Assinatura HMAC validada contra o corpo bruto e o webhook id.
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Chave única por intenção de cobrança. Retenção recomendada de 24 horas.
+      schema:
+        type: string
+        format: uuid
+    CorrelationIdParam:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      description: Identificador de correlação para logs e tracing.
+      schema:
+        type: string
+        maxLength: 128
+    TransactionId:
+      name: transactionId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+    RetryAfter:
+      name: Retry-After
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+      description: Número de segundos recomendado antes de tentar novamente.
+    Location:
+      name: Location
+      schema:
+        type: string
+        format: uri
+      description: URI do recurso criado.
+    CorrelationId:
+      name: X-Correlation-Id
+      schema:
+        type: string
+      description: Identificador de correlação gerado pelo serviço.
+
+  headers:
+    RetryAfter:
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+      description: Número de segundos antes de nova consulta ou tentativa.
+    Location:
+      schema:
+        type: string
+        format: uri
+      description: URI do recurso criado.
+    CorrelationId:
+      schema:
+        type: string
+      description: Identificador de correlação.
+
+  schemas:
+    CreatePaymentRequest:
+      type: object
+      additionalProperties: false
+      required: [user_id, order_id, amount_minor, currency, card_token, destination]
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        order_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        amount_minor:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Valor na menor unidade da moeda, por exemplo centavos para BRL.
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          example: BRL
+        card_token:
+          type: string
+          minLength: 8
+          maxLength: 512
+          description: Token do gateway. Não é PAN nem CVV.
+        capture:
+          type: boolean
+          default: true
+          description: Define se a autorização deve ser capturada imediatamente.
+        destination:
+          $ref: '#/components/schemas/TaxDestination'
+        tax_context:
+          $ref: '#/components/schemas/TaxContext'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          maxProperties: 20
+
+    CancelPaymentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 256
+        amount_minor:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Se omitido, cancela o saldo integral permitido.
+
+    TaxDestination:
+      type: object
+      additionalProperties: false
+      required: [country_code, state_code]
+      properties:
+        country_code:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          example: BR
+        state_code:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          example: SP
+        city_code:
+          type: string
+          description: Código municipal quando aplicável.
+          example: '3550308'
+        postal_code:
+          type: string
+          maxLength: 20
+
+    TaxContext:
+      type: object
+      additionalProperties: false
+      properties:
+        product_type:
+          type: string
+          maxLength: 128
+          example: physical_goods
+        customer_type:
+          type: string
+          enum: [individual, company, government, other]
+        tax_regime:
+          type: string
+          maxLength: 128
+        tax_rule_version:
+          type: string
+          maxLength: 64
+          description: Versão solicitada; o servidor pode rejeitar versões não suportadas.
+
+    TaxDetails:
+      type: object
+      additionalProperties: false
+      required: [ibs_amount, cbs_amount, total_tax, currency, rule_version, calculated_at]
+      properties:
+        ibs_amount:
+          type: integer
+          format: int64
+          minimum: 0
+        cbs_amount:
+          type: integer
+          format: int64
+          minimum: 0
+        total_tax:
+          type: integer
+          format: int64
+          minimum: 0
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        rule_version:
+          type: string
+          minLength: 1
+          maxLength: 64
+        calculated_at:
+          type: string
+          format: date-time
+        jurisdiction:
+          type: string
+          example: BR-SP
+        breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxBreakdown'
+
+    TaxBreakdown:
+      type: object
+      additionalProperties: false
+      required: [tax_type, base_amount, rate, tax_amount]
+      properties:
+        tax_type:
+          type: string
+          enum: [IBS, CBS]
+        base_amount:
+          type: integer
+          format: int64
+          minimum: 0
+        rate:
+          type: number
+          format: double
+          minimum: 0
+        tax_amount:
+          type: integer
+          format: int64
+          minimum: 0
+        legal_basis:
+          type: string
+          maxLength: 256
+
+    PaymentResponse:
+      type: object
+      additionalProperties: false
+      required: [transaction_id, order_id, status, amount_minor, currency, taxes, created_at]
+      properties:
+        transaction_id:
+          type: string
+        order_id:
+          type: string
+        user_id:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, CANCELLED, REFUNDED]
+        amount_minor:
+          type: integer
+          format: int64
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        provider_transaction_id:
+          type: string
+          description: Identificador externo sanitizado; nunca incluir dados sensíveis.
+        taxes:
+          $ref: '#/components/schemas/TaxDetails'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        failure:
+          $ref: '#/components/schemas/PaymentFailure'
+
+    PaymentFailure:
+      type: object
+      additionalProperties: false
+      required: [code, category]
+      properties:
+        code:
+          type: string
+          example: do_not_honor
+        category:
+          type: string
+          enum: [validation, gateway, timeout, fraud, tax, internal]
+        message:
+          type: string
+          description: Mensagem sanitizada para o cliente.
+
+    GatewayWebhook:
+      type: object
+      additionalProperties: false
+      required: [webhook_id, provider, provider_transaction_id, status, occurred_at]
+      properties:
+        webhook_id:
+          type: string
+        provider:
+          type: string
+        provider_transaction_id:
+          type: string
+        transaction_id:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, CANCELLED, REFUNDED]
+        occurred_at:
+          type: string
+          format: date-time
+        raw_reference:
+          type: string
+          description: Referência não sensível para auditoria; não armazenar payload bruto sem política aprovada.
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, correlation_id]
+      properties:
+        code:
+          type: string
+          example: invalid_request
+        message:
+          type: string
+        correlation_id:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Requisição inválida.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Autenticação ausente ou inválida.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso não encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Limite de requisições excedido.
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Dependência indisponível temporariamente.
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Erro interno não especificado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+x-event-contracts:
+  PaymentProcessed:
+    contentType: application/json
+    routingKey: payment.processed
+    requiredFields: [event_id, event_type, schema_version, transaction_id, order_id, status, amount_minor, currency, taxes]
+    consumer: Cart Service
+    retry:
+      maxAttempts: 4
+      delaysSeconds: [10, 60, 300]
+      deadLetterRoutingKey: payment.processed.dlq
+
+x-idempotency:
+  keyHeader: Idempotency-Key
+  ttlHours: 24
+  conflictStatus: 409
+  storage: Redis plus durable payment record
+
+x-ibscbs:
+  calculationMode: destination-based
+  requiredInputs: [amount_minor, currency, destination, tax_context]
+  output: TaxDetails
+  versioning: rule_version is mandatory in the response

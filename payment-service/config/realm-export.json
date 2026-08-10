@@ -1,0 +1,42 @@
+{
+  "realm": "fluuid-pay",
+  "enabled": true,
+  "loginTheme": "fluuid-pay",
+  "adminTheme": "fluuid-pay",
+  "accountTheme": "fluuid-pay",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "pt-BR"
+  ],
+  "defaultLocale": "pt-BR",
+  "clients": [
+    {
+      "clientId": "payment-api",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "super-secret-client",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "email": "testuser@fluuid.pay",
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpass",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

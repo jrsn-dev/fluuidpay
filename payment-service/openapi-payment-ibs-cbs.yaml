@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Fluuid Pay API
+  description: >
+    API central de pagamentos da Fluuid Pay. 
+    Responsável por processar pagamentos, consultar transações, realizar cancelamentos, gerenciar tributações (IBS/CBS) e receber webhooks de gateways parceiros.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Servidor de Desenvolvimento Local
+
+tags:
+  - name: Pagamentos
+    description: Operações relacionadas ao ciclo de vida das transações financeiras.
+  - name: Webhooks
+    description: Recebimento de eventos assíncronos de parceiros e gateways.
+  - name: Observabilidade
+    description: Endpoints para monitoramento, saúde da aplicação e métricas do Prometheus.
+
+paths:
+  /v1/payments:
+    post:
+      tags:
+        - Pagamentos
+      summary: Criar um novo pagamento
+      description: Inicia uma nova transação de pagamento. Requer tokenização prévia do cartão.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Pagamento criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Dados da requisição inválidos (ex. campos obrigatórios ausentes).
+        '401':
+          description: Não autorizado. Token JWT ausente ou inválido.
+        '422':
+          description: Regra de negócio violada (ex. saldo insuficiente, limite excedido).
+        '500':
+          description: Erro interno no servidor.
+          
+  /v1/payments/{transactionId}:
+    get:
+      tags:
+        - Pagamentos
+      summary: Consultar detalhes do pagamento
+      description: Recupera o status atual e todos os detalhes de uma transação de pagamento específica.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          description: UUID único da transação gerado no momento da criação.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detalhes da transação recuperados com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Não autorizado. Token JWT ausente ou inválido.
+        '404':
+          description: Pagamento não encontrado.
+          
+  /v1/payments/{transactionId}/cancel:
+    post:
+      tags:
+        - Pagamentos
+      summary: Cancelar um pagamento
+      description: Estorna ou cancela uma transação de pagamento, caso o status atual permita o cancelamento (ex. PENDENTE ou PROCESSANDO).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          description: UUID único da transação a ser cancelada.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pagamento cancelado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Pagamento já foi concluído ou não pode ser cancelado no estado atual.
+        '401':
+          description: Não autorizado. Token JWT ausente ou inválido.
+        '404':
+          description: Pagamento não encontrado.
+          
+  /v1/webhooks/payment-gateway:
+    post:
+      tags:
+        - Webhooks
+      summary: Receber webhook do Gateway de Pagamento
+      description: Endpoint público consumido pelo provedor de pagamentos externo para notificar mudanças assíncronas no status do cartão ou do pagamento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Payload variável dependendo do gateway de pagamento utilizado.
+      responses:
+        '200':
+          description: Webhook recebido e processado com sucesso.
+        '400':
+          description: Assinatura do webhook inválida ou payload malformado.
+          
+  /health:
+    get:
+      tags:
+        - Observabilidade
+      summary: Verificação de Saúde (Liveness)
+      description: Endpoint simples utilizado por balanceadores de carga e orquestradores (como Kubernetes) para confirmar que a aplicação está viva.
+      responses:
+        '200':
+          description: Aplicação está ativa e rodando perfeitamente.
+          
+  /ready:
+    get:
+      tags:
+        - Observabilidade
+      summary: Verificação de Prontidão (Readiness)
+      description: Verifica se o serviço está pronto para receber tráfego, testando conexões críticas como Banco de Dados Postgres e Redis.
+      responses:
+        '200':
+          description: O serviço e todas as suas dependências externas estão saudáveis.
+        '503':
+          description: Serviço Indisponível (falha na conexão com banco ou cache).
+          
+  /metrics:
+    get:
+      tags:
+        - Observabilidade
+      summary: Métricas do Prometheus
+      description: Expõe métricas de latência, uso de memória, contadores de erros HTTP e performance para serem raspadas pelo Prometheus.
+      responses:
+        '200':
+          description: Texto simples no formato Prometheus contendo as métricas.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Envie seu token JWT gerado pelo Keycloak da Fluuid Pay. Exemplo: 'Bearer eyJhbGci...'"
+      
+  schemas:
+    CreatePaymentRequest:
+      type: object
+      required:
+        - order_id
+        - amount_minor
+        - currency
+        - card_token
+      properties:
+        order_id:
+          type: string
+          example: "pedido_1002934"
+          description: "ID do pedido no sistema de E-commerce ou Carrinho."
+        amount_minor:
+          type: integer
+          example: 15000
+          description: "Valor do pagamento na menor unidade da moeda (ex: em centavos. 15000 = R$ 150,00)."
+        currency:
+          type: string
+          example: "BRL"
+          description: "Moeda no formato ISO (BRL, USD, EUR)."
+        card_token:
+          type: string
+          example: "tok_visa_k1js8a892n"
+          description: "Token seguro do cartão gerado previamente no frontend pelo PCI Compliance."
+        tax_context:
+          type: object
+          description: "Contexto tributário para cálculo dinâmico de IBS/CBS."
+          properties:
+            product_type:
+              type: string
+              example: "digital_service"
+              description: "Tipo de produto (ex. physical_goods, digital_service)."
+            customer_type:
+              type: string
+              example: "individual"
+              description: "Tipo do cliente (ex. individual, company)."
+        destination:
+          type: object
+          description: "Endereço de destino do pedido, fundamental para cálculos tributários estaduais."
+          properties:
+            country_code:
+              type: string
+              example: "BR"
+            state_code:
+              type: string
+              example: "SP"
+              
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "ID interno da transação no banco de dados da Fluuid Pay."
+        transaction_id:
+          type: string
+          description: "Código de rastreamento amigável ou gerado pelo Gateway adquirente."
+          example: "txn_891238918239"
+        status:
+          type: string
+          example: "PROCESSANDO"
+          description: "Status atual do pagamento (ex. PENDENTE, PROCESSANDO, CONCLUIDO, FALHOU, CANCELADO)."
+        amount_minor:
+          type: integer
+          example: 15000
+        currency:
+          type: string
+          example: "BRL"
+        tax_amount_minor:
+          type: integer
+          example: 150
+          description: "Total de tributos cobrados (IBS/CBS) caso aplicável."
+        created_at:
+          type: string
+          format: date-time
+          description: "Data e hora em que a transação foi iniciada."
+        updated_at:
+          type: string
+          format: date-time
+          description: "Data e hora da última modificação de status."

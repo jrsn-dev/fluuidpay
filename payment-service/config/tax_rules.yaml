@@ -1,0 +1,61 @@
+# Tax Rules — IBS/CBS
+# ATENÇÃO: Estas alíquotas são fictícias para desenvolvimento.
+# Devem ser substituídas por dados oficiais antes de produção.
+# Cada alteração deve gerar uma nova versão.
+
+version: "2026-01"
+effective_from: "2026-01-01"
+effective_to: "2026-12-31"
+
+rules:
+  # São Paulo
+  - state_code: "SP"
+    product_type: "physical_goods"
+    ibs_rate: 0.05
+    cbs_rate: 0.025
+    legal_basis: "LC 214/2025 - Art. XX"
+
+  - state_code: "SP"
+    product_type: "digital_service"
+    ibs_rate: 0.045
+    cbs_rate: 0.02
+
+  # Rio de Janeiro
+  - state_code: "RJ"
+    product_type: "physical_goods"
+    ibs_rate: 0.045
+    cbs_rate: 0.02
+
+  - state_code: "RJ"
+    product_type: "digital_service"
+    ibs_rate: 0.04
+    cbs_rate: 0.018
+
+  # Minas Gerais
+  - state_code: "MG"
+    product_type: "physical_goods"
+    ibs_rate: 0.048
+    cbs_rate: 0.022
+
+  # Paraná
+  - state_code: "PR"
+    product_type: "physical_goods"
+    ibs_rate: 0.046
+    cbs_rate: 0.021
+
+  # Rio Grande do Sul
+  - state_code: "RS"
+    product_type: "physical_goods"
+    ibs_rate: 0.047
+    cbs_rate: 0.021
+
+  # Bahia
+  - state_code: "BA"
+    product_type: "physical_goods"
+    ibs_rate: 0.044
+    cbs_rate: 0.02
+
+# Fallback for states/products not explicitly listed
+default:
+  ibs_rate: 0.04
+  cbs_rate: 0.02
