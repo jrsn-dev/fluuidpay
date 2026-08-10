@@ -99,6 +99,23 @@ services:
       postgres:
         condition: service_healthy
 
+  ecommerce-service:
+    build:
+      context: ../ecommerce-service
+      dockerfile: Dockerfile
+    container_name: fluuid-ecommerce-api
+    environment:
+      PORT: "8082"
+      PAYMENT_SERVICE_URL: "http://payment-service:8080"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+    ports:
+      - "8082:8082"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      payment-service:
+        condition: service_started
+
 volumes:
   pg_data:
   redis_data:
