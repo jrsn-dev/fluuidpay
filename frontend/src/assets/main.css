@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --green: #22c55e;
+  --green-hover: #16a34a;
+  --bg-hero: #0a0f1c;
+  --bg-section: #0f172a;
+  --bg-footer: #020617;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-hero);
+  color: #ffffff;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-primary text-bg-hero font-semibold rounded-lg transition-all duration-200 hover:bg-primary-hover hover:scale-105;
+  }
+  
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-transparent border border-slate-600 text-slate-200 font-semibold rounded-lg transition-all duration-200 hover:border-slate-500 hover:bg-white/5;
+  }
+}
